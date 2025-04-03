@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
-    'rest_framework_simplejwt',
     'event'
 ]
 SIMPLE_JWT = {
@@ -68,7 +68,7 @@ REST_FRAMEWORK ={
     "DEFAULT_AUTHENICATION_CLASSES":(
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        
     ),
     "DEFAULT_PERMISSIONS_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",

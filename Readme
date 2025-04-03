@@ -124,6 +124,7 @@ celery -A main beat -l info
 ### Authentication
 
 - `POST /api/register/` - Register a new user with phone number
+-`POST /api/login/` - Login a user 
 
 ### Events
 
