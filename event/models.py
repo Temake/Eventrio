@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 import uuid
+from django.core.validators import FileExtensionValidator
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.conf import settings
 import os
 from django.db.models.signals import post_save
@@ -35,6 +37,7 @@ class Event(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")
     title = models.CharField(max_length=255)
     description = models.TextField()
+    flyer=models.ImageField(upload_to='images/', blank=True,null=True ,validators=[FileExtensionValidator(allowed_extensions=['jpg', 'png', 'jpeg'])])
     location = models.CharField(max_length=255)
     date = models.DateField()
     time = models.TimeField()

@@ -44,8 +44,20 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'event'
+    'event',
+    'cloudinary_storage',
+    'cloudinary'
+
 ]
+
+MEDIA_URL = '/media/'  # or any prefix you choose
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('cloud_name'),
+    'API_KEY': os.getenv('api_key'),
+    'API_SECRET': os.getenv('api_secret')
+  
+}
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME":timedelta(days=2)
