@@ -106,6 +106,12 @@ class EventSerializer(serializers.ModelSerializer):
             return obj.creator.profile.phone_number
         except ObjectDoesNotExist:
             return None
+    def get_img(self, obj):
+        """Return the full URL of the uploaded image."""
+        request = self.context.get('request')  # Get the request object from the serializer context
+        if obj.flyer and request:
+            return request.build_absolute_uri(obj.flyer.url)  # Build the full URL for the image
+        return None
 
     def create(self, validated_data):
         """Associate the event with the creator."""
