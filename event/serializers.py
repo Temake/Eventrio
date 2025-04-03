@@ -89,10 +89,11 @@ class EventSerializer(serializers.ModelSerializer):
     attendee_count = serializers.SerializerMethodField()
     creator_phone = serializers.SerializerMethodField()
     creator = serializers.ReadOnlyField(source='creator.username')
+    flyer = serializers.SerializerMethodField()  # Add this to return the image URL
 
     class Meta:
         model = Event
-        fields = ('id', 'title','img','creator', 'description', 'location','time', 'date', 
+        fields = ('id', 'title','flyer','creator', 'description', 'location','time', 'date', 
                   'created_at', 'registration_link', 'attendee_count', 'creator_phone')
 
     def get_attendee_count(self, obj):
