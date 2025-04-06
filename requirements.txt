@@ -10,8 +10,10 @@ click==8.1.8
 click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
+cloudinary==1.43.0
 colorama==0.4.6
 Django==5.1.7
+django-cloudinary-storage==0.3.0
 django-cors-headers==4.7.0
 django-rest-framework==0.1.0
 djangorestframework==3.16.0

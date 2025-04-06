@@ -20,14 +20,13 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from rest_framework_simplejwt.views import TokenVerifyView
+from rest_framework import urls
 from rest_framework.authtoken import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/login', views.ObtainAuthToken.as_view(), name='obtain_auth_token'),
-    
-
-
+    path('login', views.ObtainAuthToken.as_view(), name='obtain_auth_token'),
     path('api/', include('event.urls')),
+   
+
 ]

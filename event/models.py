@@ -37,7 +37,7 @@ class Event(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")
     title = models.CharField(max_length=255)
     description = models.TextField()
-    flyer=models.ImageField(upload_to='images/', blank=True,null=True ,validators=[FileExtensionValidator(allowed_extensions=['jpg', 'png', 'jpeg'])])
+    flyer=models.ImageField(upload_to='images/', blank=True,null=True ,validators=[FileExtensionValidator(allowed_extensions=['jpg', 'png', 'jpeg'])],storage=MediaCloudinaryStorage)
     location = models.CharField(max_length=255)
     date = models.DateField()
     time = models.TimeField()
@@ -47,15 +47,7 @@ class Event(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.registration_link:
-            registration = f"{self.id}-{get_random_string(8)}"
-            if settings.DEBUG:
-                self.registration_link = (
-                    "http://127.0.0.1:8000/" + "api/register-event/" + f"{registration}/"
-                )
-            else:
-                self.registration_link = (
-                    os.getenv("BASE_URL") + "api/register-event/" + f"{registration}/"
-                )
+            self.registration_link = f"{self.id}-{get_random_string(8)}"
         super().save(*args, **kwargs)
 
     @property

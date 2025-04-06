@@ -81,40 +81,49 @@ class EventRegistrationView(generics.GenericAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [permissions.AllowAny]
     
-    def get(self, request, registration_link):
-        event = get_object_or_404(Event, registration_link=registration_link)
-        return Response({
-            'event': EventSerializer(event).data
-        })
+    # def get(self, request):
+      
+    #     # Find the event by matching the registration code in the registration_link
+    #     event = get_object_or_404(Event)
+    #     return Response({
+    #         'event': EventSerializer(event).data
+    #     })
     
-    def post(self, request, registration_link):
+    def post(self, request, registration_link=None):
+       
+   
         event = get_object_or_404(Event, registration_link=registration_link)
+        attendee = request.data.get('email')
         serializer = self.get_serializer(data=request.data, context={'event_id': event.id})
         
         if serializer.is_valid():
             serializer.save()
+            
+            # Send confirmation email
+            message = f"Thank you for registering for {event.title}, We look forward to seeing you at the event"
+            
+            try:
+                send_mail(
+                    subject=f"You have Successfully registered for {event.title}",
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[attendee],
+                    fail_silently=False,
+                )
+                
+                # # Create a reminder record
+                # Reminder.objects.create(
+                #     attendee=attendee,
+                #     message=message,
+                #     type='EMAIL'
+                # )
+                
+            except Exception as e:
+                print(f"Failed to send email reminder: {str(e)}")
+                
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    def send_email_reminder(request,attendee, event, message):
-   
-        try:
-            send_mail(
-                subject=f"Your have Successfully registerd for {event.title}",
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[attendee.email],
-                fail_silently=False,
-            )
-            
-            
-            Reminder.objects.create(
-                attendee=attendee,
-                message=message,
-                type='EMAIL'
-            )
-            
-        except Exception as e:
-            print(f"Failed to send email reminder: {str(e)}")
+
 def logout(request):
     try:
         request.user.auth_token.delete()

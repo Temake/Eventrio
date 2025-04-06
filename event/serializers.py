@@ -83,13 +83,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    """Serializer for event details."""
 
     registration_link = serializers.ReadOnlyField()
     attendee_count = serializers.SerializerMethodField()
     creator_phone = serializers.SerializerMethodField()
     creator = serializers.ReadOnlyField(source='creator.username')
-    flyer = serializers.SerializerMethodField()  # Add this to return the image URL
+
 
     class Meta:
         model = Event
@@ -97,7 +96,6 @@ class EventSerializer(serializers.ModelSerializer):
                   'created_at', 'registration_link', 'attendee_count', 'creator_phone')
 
     def get_attendee_count(self, obj):
-        """Get the count of attendees for the event."""
         return obj.attendees.count()
         
     def get_creator_phone(self, obj):
@@ -106,12 +104,7 @@ class EventSerializer(serializers.ModelSerializer):
             return obj.creator.profile.phone_number
         except ObjectDoesNotExist:
             return None
-    def get_img(self, obj):
-        """Return the full URL of the uploaded image."""
-        request = self.context.get('request')  # Get the request object from the serializer context
-        if obj.flyer and request:
-            return request.build_absolute_uri(obj.flyer.url)  # Build the full URL for the image
-        return None
+   
 
     def create(self, validated_data):
         """Associate the event with the creator."""
@@ -127,8 +120,6 @@ class EventDetailSerializer(EventSerializer):
 
 
 class AttendeeSerializer(serializers.ModelSerializer):
-    """Serializer for event attendees."""
-
     class Meta:
         model = Attendee
         fields = ("id", "name", "email", "phone_number", "registered_at")
