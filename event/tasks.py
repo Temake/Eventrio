@@ -10,7 +10,7 @@ from .models import Event,  Reminder
 @shared_task
 def send_event_reminders():
   
-    # Find events that are coming up in the next 24 hours or 4days
+
     tomorrow = timezone.now() + timedelta(days=1)
     four_days = timezone.now() + timedelta(days=4)
     
@@ -50,7 +50,7 @@ def send_email_reminder(attendee, event, message):
         send_mail(
             subject=f"Reminder: {event.title}",
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email= f'{settings.DEFAULT_FROM_EMAIL}',
             recipient_list=[attendee.email],
             fail_silently=False,
         )

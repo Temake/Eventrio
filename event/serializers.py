@@ -4,12 +4,16 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import UserProfile, Event, Attendee, Reminder
 
 
+class SocialAccountSeralizer(serializers.ModelSerializer):
+    class Meta:
+        fields= ['email','username','phone_number']
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile details."""
 
     class Meta:
         model = UserProfile
-        fields = ("phone_number", "confirm_password")
+        fields = ["phone_number", "confirm_password"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = (
+        fields = [
             "id",
             "username",
             "email",
@@ -30,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "profile",
             "confirm_password",
-        )
+        ]
         extra_kwargs = {
             "password": {"write_only": True},
             "confirm_password": {"write_only": True},
@@ -92,8 +96,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ('id', 'title','flyer','creator', 'description', 'location','time', 'date', 
-                  'created_at', 'registration_link', 'attendee_count', 'creator_phone')
+        fields = ['id', 'title','flyer','creator', 'description', 'location','time', 'date', 
+                  'created_at', 'registration_link', 'attendee_count', 'creator_phone']
 
     def get_attendee_count(self, obj):
         return obj.attendees.count()
@@ -116,13 +120,13 @@ class EventDetailSerializer(EventSerializer):
     """Serializer for detailed event view."""
 
     class Meta(EventSerializer.Meta):
-        fields = EventSerializer.Meta.fields + ("updated_at",)
+        fields = EventSerializer.Meta.fields + ["updated_at",]
 
 
 class AttendeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendee
-        fields = ("id", "name", "email", "phone_number", "registered_at")
+        fields = ["id", "name", "email", "phone_number", "registered_at"]
 
     def create(self, validated_data):
         """Associate an attendee with an event."""
@@ -144,4 +148,4 @@ class ReminderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reminder
-        fields = ("id", "sent_at", "message", "type")
+        fields = ["id", "sent_at", "message", "type"]

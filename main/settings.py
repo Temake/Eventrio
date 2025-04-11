@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'event',
     'cloudinary_storage',
-    'cloudinary'
+    'cloudinary',
+    'celery'
 
 ]
 
@@ -167,12 +168,14 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = 587
+DEFAULT_FROM_EMAIL= "Eventrio <teminioluwaopemipo@gmail.com>"
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'teminioluwaopemipo@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ndyiykcdagyjxotg')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'teminioluwaopemipo@gmail.com')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
@@ -184,7 +187,7 @@ CELERY_TIMEZONE = 'UTC'
 # Schedule for the reminder task to run daily
 CELERY_BEAT_SCHEDULE = {
     'send-event-reminders': {
-        'task': 'your_app.tasks.send_event_reminders',
+        'task': '.tasks.send_event_reminders',
         'schedule': timedelta(hours=24),
     },
 }

@@ -10,6 +10,7 @@ router.register(r'events', views.EventViewSet, basename='event')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('google/login/', views.GoogleLoginView.as_view(), name='google-login'),
     path('auth/',include('rest_framework.urls')),
     path('logout/', views.logout, name='user-logout'),
     path('register/', views.UserRegistrationView.as_view(), name='user-registration'),
