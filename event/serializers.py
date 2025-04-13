@@ -108,13 +108,13 @@ class EventSerializer(serializers.ModelSerializer):
             return obj.creator.profile.phone_number
         except ObjectDoesNotExist:
             return None
-   
+
+
 
     def create(self, validated_data):
         """Associate the event with the creator."""
         validated_data["creator"] = self.context["request"].user
         return super().create(validated_data)
-
 
 class EventDetailSerializer(EventSerializer):
     """Serializer for detailed event view."""

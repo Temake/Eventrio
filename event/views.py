@@ -6,6 +6,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 import requests
+from .permissions import IsEventCreator
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
@@ -50,7 +51,7 @@ class UserRegistrationView(generics.CreateAPIView):
 
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsEventCreator]
     authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
@@ -76,8 +77,7 @@ class EventViewSet(viewsets.ModelViewSet):
 class PublicEventListView(generics.ListAPIView):
     serializer_class = EventSerializer
     queryset = Event.objects.all()
-
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class AttendeeView(generics.ListAPIView):
@@ -94,14 +94,15 @@ class AttendeeView(generics.ListAPIView):
 class EventRegistrationView(generics.GenericAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [permissions.AllowAny]
+    
 
-    # def get(self, request):
+    def get(self, request,registration_link=None):
 
-    #     # Find the event by matching the registration code in the registration_link
-    #     event = get_object_or_404(Event)
-    #     return Response({
-    #         'event': EventSerializer(event).data
-    #     })
+        # Find the event by matching the registration code in the registration_link
+        event = get_object_or_404(Event, registration_link=registration_link)
+        return Response({
+            'event': EventSerializer(event).data
+        })
 
     def post(self, request, registration_link=None):
 
@@ -144,7 +145,7 @@ class EventRegistrationView(generics.GenericAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@api_view(["POST"])
 def logout(request):
     try:
         request.user.auth_token.delete()

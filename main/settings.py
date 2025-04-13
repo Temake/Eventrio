@@ -59,6 +59,7 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('api_secret')
   
 }
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME":timedelta(days=2)
