@@ -212,4 +212,4 @@ def google(request):
             'token': token.key
         }, status=200)
 
-    return Response({"message":"An error occured, Pleasee try again later"},status=500)
+    return Response({"message":"An error occured, Pleasee try again later"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
