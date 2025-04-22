@@ -55,7 +55,7 @@ cover/
 *.mo
 *.pot
 
-
+*.__pycache__/
 # Flask stuff:
 instance/
 .webassets-cache
