@@ -56,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Create a new user and associate a profile."""
+       
         email = validated_data.get("email")
         username = validated_data.get("username")
         phone_number = validated_data.pop("phone_number", None)
