@@ -144,8 +144,7 @@ class AttendeeSerializer(serializers.ModelSerializer):
 
 
 class ReminderSerializer(serializers.ModelSerializer):
-    """Serializer for reminders."""
-
+ 
     class Meta:
         model = Reminder
         fields = ["id", "sent_at", "message", "type"]

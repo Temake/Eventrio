@@ -7,42 +7,7 @@ from datetime import timedelta
 from celery import shared_task
 from .models import Event,  Reminder
 
-@shared_task
-def send_event_reminders():
-  
 
-    tomorrow = timezone.now() + timedelta(days=1)
-    four_days = timezone.now() + timedelta(days=4)
-    
-    # Get events in the next 3 days
-    upcoming_events = Event.objects.filter(
-        date__gte=tomorrow,
-        date__lte=four_days
-    )
-    
-    for event in upcoming_events:
-        days_until_event = (event.date - timezone.now()).days
-        
-        for attendee in event.attendees.all():
-         
-            if Reminder.objects.filter(
-                attendee=attendee,
-                sent_at__date=timezone.now().date()
-            ).exists():
-                continue
-            
-            
-            if days_until_event <= 1:
-                message = f"REMINDER: The event '{event.title}' is TOMORROW at {event.date.strftime('%H:%M')} in {event.location}."
-            else:
-                message = f"REMINDER: The event '{event.title}' is coming up in {days_until_event} days at {event.date.strftime('%H:%M')} in {event.location}."
-            
-            # Send email reminder
-            send_email_reminder(attendee, event, message)
-            
-            # Send WhatsApp reminder if phone number is available
-            if attendee.phone_number:
-                send_whatsapp_reminder(attendee, message)
 
 def send_email_reminder(attendee, event, message):
     """Send email reminder to an attendee"""
@@ -80,3 +45,42 @@ def send_whatsapp_reminder(attendee, message):
         
     except Exception as e:
         print(f"Failed to send WhatsApp reminder: {str(e)}")
+
+
+@shared_task
+def send_event_reminders():
+  
+
+    tomorrow = timezone.now() + timedelta(days=1)
+    four_days = timezone.now() + timedelta(days=4)
+    
+    # Get events in the next 3 days
+    upcoming_events = Event.objects.filter(
+        date__gte=tomorrow,
+        date__lte=four_days
+    )
+    
+    for event in upcoming_events:
+        days_until_event = (event.date - timezone.now()).days
+        
+        for attendee in event.attendees.all():
+         
+            if Reminder.objects.filter(
+                attendee=attendee,
+                sent_at__date=timezone.now().date()
+            ).exists():
+                continue
+            
+            
+            if days_until_event <= 1:
+                message = f"REMINDER: The event '{event.title}' is TOMORROW at {event.date.strftime('%H:%M')} in {event.location}."
+            else:
+                message = f"REMINDER: The event '{event.title}' is coming up in {days_until_event} days at {event.date.strftime('%H:%M')} in {event.location}."
+            
+            # Send email reminder
+            send_email_reminder(attendee, event, message)
+            
+            # Send WhatsApp reminder if phone number is available
+            if attendee.phone_number:
+                send_whatsapp_reminder(attendee, message)
+

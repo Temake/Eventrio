@@ -160,7 +160,7 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL= "Eventrio <teminioluwaopemipo@gmail.com>"
+DEFAULT_FROM_EMAIL= "Eventrio"
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 
@@ -174,7 +174,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-# Schedule for the reminder task to run daily
+
 CELERY_BEAT_SCHEDULE = {
     'send-event-reminders': {
         'task': '.tasks.send_event_reminders',
