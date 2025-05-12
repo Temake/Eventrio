@@ -56,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Create a new user and associate a profile."""
+       
         email = validated_data.get("email")
         username = validated_data.get("username")
         phone_number = validated_data.pop("phone_number", None)
@@ -108,13 +108,13 @@ class EventSerializer(serializers.ModelSerializer):
             return obj.creator.profile.phone_number
         except ObjectDoesNotExist:
             return None
-   
+
+
 
     def create(self, validated_data):
         """Associate the event with the creator."""
         validated_data["creator"] = self.context["request"].user
         return super().create(validated_data)
-
 
 class EventDetailSerializer(EventSerializer):
     """Serializer for detailed event view."""
@@ -144,8 +144,7 @@ class AttendeeSerializer(serializers.ModelSerializer):
 
 
 class ReminderSerializer(serializers.ModelSerializer):
-    """Serializer for reminders."""
-
+ 
     class Meta:
         model = Reminder
         fields = ["id", "sent_at", "message", "type"]

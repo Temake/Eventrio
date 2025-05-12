@@ -1,11 +1,14 @@
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 import requests
+from .permissions import IsEventCreator
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
@@ -50,7 +53,7 @@ class UserRegistrationView(generics.CreateAPIView):
 
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsEventCreator]
     authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
@@ -76,8 +79,7 @@ class EventViewSet(viewsets.ModelViewSet):
 class PublicEventListView(generics.ListAPIView):
     serializer_class = EventSerializer
     queryset = Event.objects.all()
-
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class AttendeeView(generics.ListAPIView):
@@ -95,13 +97,11 @@ class EventRegistrationView(generics.GenericAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [permissions.AllowAny]
 
-    # def get(self, request):
+    def get(self, request, registration_link=None):
 
-    #     # Find the event by matching the registration code in the registration_link
-    #     event = get_object_or_404(Event)
-    #     return Response({
-    #         'event': EventSerializer(event).data
-    #     })
+        # Find the event by matching the registration code in the registration_link
+        event = get_object_or_404(Event, registration_link=registration_link)
+        return Response({"event": EventSerializer(event).data})
 
     def post(self, request, registration_link=None):
 
@@ -115,16 +115,24 @@ class EventRegistrationView(generics.GenericAPIView):
         if serializer.is_valid():
             serializer.save()
 
-            # Send confirmation email
-            message = f"Thank you for registering for {event.title}, We look forward to seeing you at the event"
+            context = {
+                "event_title": event.title,
+                "event_date": event.date,
+                "event_time": event.time,
+                "event_location": event.location,
+                "attendee_email": attendee,
+            }
+            html_message = render_to_string("emails/event_registration.html", context)
+            plain_message = strip_tags(html_message)
 
             try:
                 send_mail(
                     subject=f"You have Successfully registered for {event.title}",
-                    message=message,
+                    message=plain_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[attendee],
                     fail_silently=False,
+                    html_message=html_message,
                 )
 
                 # # Create a reminder record
@@ -145,6 +153,7 @@ class EventRegistrationView(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["POST"])
 def logout(request):
     try:
         request.user.auth_token.delete()
@@ -161,7 +170,7 @@ def logout(request):
 def google(request):
     code = request.GET.get("code")
     if code is None:
-       return Response({"message": "No code provided"}, status=400)
+        return Response({"message": "No code provided"}, status=400)
 
     PARAMS = {
         "client_id": os.environ.get("google_id") or "",
@@ -171,18 +180,22 @@ def google(request):
         "grant_type": "authorization_code",
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    token_response = requests.post("https://oauth2.googleapis.com/token", data=PARAMS, headers=headers)
+    token_response = requests.post(
+        "https://oauth2.googleapis.com/token", data=PARAMS, headers=headers
+    )
 
     if token_response.status_code != 200:
-        print(token_response.json())
-        return Response({"message": "Failed to get access token", "error": token_response.json()}, status=400)
+        return Response(
+            {"message": "Failed to get access token", "error": token_response.json()},
+            status=400,
+        )
 
     token_data = token_response.json()
     access_token = token_data.get("access_token")
 
     user_info_response = requests.get(
         "https://www.googleapis.com/oauth2/v2/userinfo",
-        headers={"Authorization": f"Bearer {access_token}"}
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     if user_info_response.status_code != 200:
@@ -194,21 +207,24 @@ def google(request):
     if existing_user:
         token, created = Token.objects.get_or_create(user=existing_user)
         user_data = UserSerializer(existing_user).data
-        return Response({
-            'user': user_data,
-            'token': token.key
-        }, status=200)
+        return Response({"user": user_data, "token": token.key}, status=200)
 
     # Creating a new user
-    create_user =  SocialAccountSeralizer(data={"email": user_info["email"], "username": user_info["given_name"],"phone_number":user_info["phone_number"]})
+    create_user = SocialAccountSeralizer(
+        data={
+            "email": user_info["email"],
+            "username": user_info["given_name"],
+            "phone_number": user_info["phone_number"],
+        }
+    )
 
     if create_user.is_valid():
         user_instance = create_user.save()
         token, created = Token.objects.get_or_create(user=user_instance)
-        
-        return Response({
-            'user': create_user.data,
-            'token': token.key
-        }, status=200)
 
-    return Response({"message":"An error occured, Pleasee try again later"},status=500)
+        return Response({"user": create_user.data, "token": token.key}, status=200)
+
+    return Response(
+        {"message": "An error occured, Please try again later"},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
