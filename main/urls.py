@@ -21,9 +21,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from rest_framework import urls
+from .views import root
 from rest_framework.authtoken import views
 
 urlpatterns = [
+    path('', root),
     path('admin/', admin.site.urls),
     path('login', views.ObtainAuthToken.as_view(), name='obtain_auth_token'),
     path('api/', include('event.urls')),
