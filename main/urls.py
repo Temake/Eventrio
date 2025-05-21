@@ -21,6 +21,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from rest_framework import urls
+from .views import root
 from rest_framework.authtoken import views
 
 urlpatterns = [

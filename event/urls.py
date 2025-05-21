@@ -10,8 +10,9 @@ router.register(r'events', views.EventViewSet, basename='event')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('google/login/', views.GoogleLoginView.as_view(), name='google-login'),
+    #path('google/login/', views.GoogleLoginView.as_view(), name='google-login'),
     path('auth/',include('rest_framework.urls')),
+    path('webhook/whatsapp/', views.whatsapp_webhook, name='whatsapp-webhook'),
     path('logout/', views.logout, name='user-logout'),
     path('register/', views.UserRegistrationView.as_view(), name='user-registration'),
     path('public-events/', views.PublicEventListView.as_view(), name='public-events'),

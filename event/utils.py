@@ -52,20 +52,75 @@ def whatsapp_webhook(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-def send_whatsapp_message(to, message):
+
+import requests
+import json
+import logging
+from django.conf import settings
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+def send_whatsapp_message(to, message, message_type='text'):
+    """
+    Send a WhatsApp message using the WhatsApp Business API
     
-    api_url = settings.WHATSAPP_API_URL
-    headers = {
-        'Authorization': f'Bearer {settings.WHATSAPP_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
+    Args:
+        to (str): The recipient's phone number in international format (without +)
+        message (str): The message content to send
+        message_type (str): The type of message ('text', 'template', etc.)
     
-    payload = {
-        'messaging_product': 'whatsapp',
-        'to': to,
-        'type': 'text',
-        'text': {'body': message}
-    }
+    Returns:
+        dict: The API response
+    """
+    try:
+        # Ensure the phone number is in the correct format
+        if to.startswith('+'):
+            to = to[1:]  # Remove the + if present
+            
+        api_url = settings.WHATSAPP_API_URL
+        headers = {
+            'Authorization': f'Bearer {settings.WHATSAPP_API_TOKEN}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Build the payload based on message type
+        if message_type == 'text':
+            payload = {
+                'messaging_product': 'whatsapp',
+                'recipient_type': 'individual',
+                'to': to,
+                'type': 'text',
+                'text': {'body': message}
+            }
+        elif message_type == 'template':
+            # You would need to customize this for your specific templates
+            payload = {
+                'messaging_product': 'whatsapp',
+                'recipient_type': 'individual',
+                'to': to,
+                'type': 'template',
+                'template': {
+                    'name': message['template_name'],
+                    'language': {'code': 'en_US'},
+                    'components': message['components']
+                }
+            }
+        else:
+            raise ValueError(f"Unsupported message type: {message_type}")
+        
+        # Send the request
+        response = requests.post(api_url, json=payload, headers=headers)
+        response_data = response.json()
+        
+        # Log the response
+        if response.status_code != 200:
+            logger.error(f"WhatsApp API error: {response.status_code} - {response_data}")
+        else:
+            logger.info(f"WhatsApp message sent to {to}")
+            
+        return response_data
+        
+    except Exception as e:
+        logger.error(f"Error sending WhatsApp message: {str(e)}")
     
-    response = requests.post(api_url, json=payload, headers=headers)
-    return response.json()

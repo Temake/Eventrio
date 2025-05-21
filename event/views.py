@@ -2,6 +2,9 @@ from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from django.conf import settings
+from rest_framework.permissions import AllowAny
+from django.http import HttpResponse
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -23,6 +26,82 @@ from .serializers import (
     UserProfileSerializer,
     SocialAccountSeralizer,
 )
+from django.views.decorators.csrf import csrf_exempt
+import json
+import hmac
+import hashlib
+
+
+@csrf_exempt
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def whatsapp_webhook(request):
+    """
+    WhatsApp Webhook endpoint - handles both verification and incoming messages
+    """
+    if request.method == 'GET':
+        # This is a verification request from WhatsApp/Meta
+        mode = request.query_params.get('hub.mode')
+        token = request.query_params.get('hub.verify_token')
+        challenge = request.query_params.get('hub.challenge')
+        
+        # Verify against your configured token
+        if mode == 'subscribe' and token == settings.WHATSAPP_VERIFY_TOKEN:
+            return HttpResponse(challenge, status=200)
+        else:
+            return HttpResponse('Verification failed', status=403)
+    
+    elif request.method == 'POST':
+        # This is an actual webhook event (incoming message etc.)
+        
+        # Verify the request is from WhatsApp/Meta using their signature
+        signature = request.headers.get('X-Hub-Signature-256', '')
+        
+        if settings.WHATSAPP_APP_SECRET:
+            # Get the raw body
+            raw_body = request.body
+            
+            # Compute the expected signature
+            expected_signature = 'sha256=' + hmac.new(
+                settings.WHATSAPP_APP_SECRET.encode('utf-8'),
+                raw_body,
+                hashlib.sha256
+            ).hexdigest()
+            
+            # Compare signatures - if they don't match, reject the request
+            if not hmac.compare_digest(signature, expected_signature):
+                return HttpResponse('Invalid signature', status=403)
+        
+        # Process the webhook data
+        try:
+            data = json.loads(request.body)
+            
+            # Check if this is a WhatsApp message
+            if 'object' in data and data['object'] == 'whatsapp_business_account':
+                # Process each entry
+                for entry in data.get('entry', []):
+                    for change in entry.get('changes', []):
+                        value = change.get('value', {})
+                        
+                        # Process messages
+                        if 'messages' in value:
+                            for message in value['messages']:
+                                # Extract relevant information
+                                phone_number = message.get('from', '')
+                                message_body = message.get('text', {}).get('body', '')
+                                message_id = message.get('id', '')
+                                
+                                # Process the message (using your existing logic)
+                                send_whatsapp_message(phone_number, message_body)
+                
+                return HttpResponse('Webhook received successfully', status=200)
+            
+            return HttpResponse('Ignored', status=200)
+            
+        except Exception as e:
+            return HttpResponse(f'Error processing webhook: {str(e)}', status=500)
+    
+    return HttpResponse('Method not allowed', status=405)
 
 
 class UserRegistrationView(generics.CreateAPIView):
