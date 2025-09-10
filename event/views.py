@@ -15,6 +15,8 @@ from django.conf import settings
 import os
 from .utils import send_whatsapp_message
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.openapi import OpenApiTypes
 
 from .models import Event, Attendee, Reminder
 from .serializers import (
@@ -32,6 +34,17 @@ import hmac
 import hashlib
 
 
+@extend_schema(
+    summary="WhatsApp Webhook",
+    description="Webhook endpoint for WhatsApp Business API integration with AI-powered responses",
+    methods=['GET', 'POST'],
+    responses={
+        200: {'description': 'Webhook processed successfully'},
+        403: {'description': 'Invalid verification token'},
+        500: {'description': 'Error processing webhook'}
+    },
+    tags=['WhatsApp Integration']
+)
 @csrf_exempt
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
@@ -104,6 +117,25 @@ def whatsapp_webhook(request):
     return HttpResponse('Method not allowed', status=405)
 
 
+@extend_schema(
+    summary="User Registration",
+    description="Register a new user with email, password, and phone number",
+    request=UserSerializer,
+    responses={
+        201: {
+            'description': 'User created successfully',
+            'examples': {
+                'application/json': {
+                    'user': {'id': 1, 'username': 'john@example.com', 'email': 'john@example.com'},
+                    'message': 'User registered successfully',
+                    'token': 'your-auth-token-here'
+                }
+            }
+        },
+        400: {'description': 'Validation errors'}
+    },
+    tags=['Authentication']
+)
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
@@ -127,6 +159,11 @@ class UserRegistrationView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    summary="Event Management",
+    description="CRUD operations for events. Users can create, list, update, and delete their own events.",
+    tags=['Events']
+)
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -144,6 +181,12 @@ class EventViewSet(viewsets.ModelViewSet):
             return EventDetailSerializer
         return EventSerializer
 
+    @extend_schema(
+        summary="Get Event Attendees",
+        description="Retrieve all attendees for a specific event",
+        responses={200: AttendeeSerializer(many=True)},
+        tags=['Events']
+    )
     @action(detail=True, methods=["get"])
     def attendees(self, request, pk=None):
         event = self.get_object()
@@ -152,6 +195,12 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+@extend_schema(
+    summary="Public Events List",
+    description="Get a list of all public events without authentication",
+    responses={200: EventSerializer(many=True)},
+    tags=['Public']
+)
 class PublicEventListView(generics.ListAPIView):
     serializer_class = EventSerializer
     queryset = Event.objects.all()
@@ -159,6 +208,20 @@ class PublicEventListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
 
+@extend_schema(
+    summary="Event Attendees",
+    description="Get attendees for a specific event (creator only)",
+    parameters=[
+        OpenApiParameter(
+            name='id',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description='Event ID'
+        )
+    ],
+    responses={200: AttendeeSerializer(many=True)},
+    tags=['Events']
+)
 class AttendeeView(generics.ListAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -170,6 +233,32 @@ class AttendeeView(generics.ListAPIView):
         return Attendee.objects.filter(event__id=event_id, event__creator=user)
 
 
+@extend_schema(
+    summary="Event Registration",
+    description="Register for an event using a registration link",
+    parameters=[
+        OpenApiParameter(
+            name='registration_link',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='Unique registration link for the event'
+        )
+    ],
+    request=AttendeeSerializer,
+    responses={
+        201: {
+            'description': 'Registration successful',
+            'examples': {
+                'application/json': {
+                    'message': 'Registration successful! Confirmation sent via email and WhatsApp.'
+                }
+            }
+        },
+        400: {'description': 'Already registered or validation error'},
+        404: {'description': 'Event not found'}
+    },
+    tags=['Registration']
+)
 class EventRegistrationView(generics.GenericAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [permissions.AllowAny]

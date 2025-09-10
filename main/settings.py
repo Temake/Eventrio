@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'event',
     'cloudinary_storage',
     'cloudinary',
-    'celery'
+    'celery',
+    'drf_spectacular'
 
 ]
 
@@ -87,7 +88,17 @@ REST_FRAMEWORK ={
         "rest_framework.permissions.IsAuthenticated",
         
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Eventrio: Event Management API',
+    'DESCRIPTION': 'This Event Management API allows users to create events, generate registration links, manage attendees, and implement automated reminders via email and WhatsApp. It also includes a WhatsApp integration with Googles Gemini AI model that can answer attendee questions based on event descriptions.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -148,7 +159,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
+APPEND_SLASH =False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
