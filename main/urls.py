@@ -26,6 +26,7 @@ from rest_framework.authtoken import views
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
+    path('', root),
     path('admin/', admin.site.urls),
     path('login', views.ObtainAuthToken.as_view(), name='obtain_auth_token'),
     path('api/', include('event.urls')),
